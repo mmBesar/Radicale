@@ -1,16 +1,28 @@
 name: Conatainer Image CI
 
 on:
-  push
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
-  build_and_publish:
-    runs-on: fedora-latest
+  build:
+    runs-on: macos-latest
+
+    container:
+      image: ghcr.io/mmBesar/radicale:latest
+
     steps:
-      - uses: actions/checkout@v3
-      - name: Build and Publish Container Image
-        run:
-          podman login --username mbesar --password ${{ secrets.MANAGE_PACKAGES }} ghcr.io
-          podman manifest create ghcr.io/mmBesar/radicale:latest
-          podman build --platform linux/amd64,linux/arm64 --manifest ghcr.io/mmBesar/radicale:latest .
-          podman manifest push ghcr.io/mmBesar/radicale:latest
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Log in to container registry
+        run: echo "${{ secrets.MANAGE_PACKAGES }}" | podman login -u mbesar --password-stdin ghcr.io
+
+      - name: Build and push multi-architecture image
+        run: |
+          podman build --format docker --platform linux/amd64,linux/arm64 -t ghcr.io/mmBesar/radicale:latest .
+          podman push ghcr.io/mmBesar/radicale:latest
