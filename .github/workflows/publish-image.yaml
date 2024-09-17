@@ -6,19 +6,11 @@ on:
 jobs:
   build_and_publish:
     runs-on: ubuntu-latest
-    
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Log in to container registry
-        run: 
-          echo "${{ secrets.MANAGE_PACKAGES }}" | podman login -u mbesar --password-stdin ghcr.io
-        
-      - name: Build multi-architecture Image
+      - uses: actions/checkout@v3
+      - name: Build and Publish Container Image
         run: |
-          podman build --format docker --platform linux/amd64,linux/arm64 -t ghcr.io/mmbesar/radicale:latest .
-
-      - name: Publish multi-architecture Image
-        run: |
-          podman push ghcr.io/mmbesar/radicale:latest
+          podman login --username mbesar --password ${{ secrets.MANAGE_PACKAGES }} ghcr.io
+          podman manifest create ghcr.io/mmBesar/radicale:latest
+          podman build --platform linux/amd64,linux/arm64 --manifest ghcr.io/mmBesar/radicale:latest .
+          podman manifest push ghcr.io/mmBesar/radicale:latest
