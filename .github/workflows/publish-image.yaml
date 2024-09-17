@@ -5,7 +5,8 @@ on:
 
 jobs:
   build_and_publish:
-    runs-on: ubuntu-latest
+    machine:
+      image: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - name: Build and Publish Container Image
