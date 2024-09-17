@@ -24,19 +24,19 @@ jobs:
 
       - name: Login to GHCR
         if: github.event_name != 'pull_request'
-        uses: docker/login-action@v1
+        uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.MANAGE_PACKAGES }}
 
-      - name: Docker meta
-        id: rcale # you'll use this in the next step
-        uses: docker/metadata-action@v3
-        with:
+      # - name: Docker meta
+      #   id: rcale # you'll use this in the next step
+      #   uses: docker/metadata-action@v3
+      #   with:
           # list of Docker images to use as base name for tags
-          images: |
-            ghcr.io/mmbesar/radicale
+          # images: |
+          #   ghcr.io/mmbesar/radicale
           # Docker tags based on the following events/attributes
           # tags: |
           #   type=schedule
@@ -51,7 +51,9 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          platforms: linux/amd64,linux/arm64
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.rcale.outputs.tags }}
-          labels: ${{ steps.rcale.outputs.labels }}
+          push: true
+          tags: ghcr.io/mmbesar/radicale:latest
+          # platforms: linux/amd64,linux/arm64
+          # push: ${{ github.event_name != 'pull_request' }}
+          # tags: ${{ steps.rcale.outputs.tags }}
+          # labels: ${{ steps.rcale.outputs.labels }}
