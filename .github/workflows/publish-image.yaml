@@ -14,7 +14,10 @@ jobs:
       - name: Log in to container registry
         run: echo "${{ secrets.MANAGE_PACKAGES }}" | podman login -u mbesar --password-stdin ghcr.io
         
-      - name: Build and Publish multi-architecture Image
+      - name: Build multi-architecture Image
         run:
           podman build --format docker --platform linux/amd64,linux/arm64 -t ghcr.io/mmbesar/radicale:latest .
+
+      - name: Publish multi-architecture Image
+        run:
           podman push ghcr.io/mmbesar/radicale:latest
