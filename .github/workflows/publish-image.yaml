@@ -9,7 +9,7 @@ jobs:
     
     steps:
       - name: Checkout repository
-      - uses: actions/checkout@v3
+        uses: actions/checkout@v3
 
       - name: Log in to container registry
         run: echo "${{ secrets.MANAGE_PACKAGES }}" | podman login -u mbesar --password-stdin ghcr.io
