@@ -11,6 +11,6 @@ jobs:
       - name: Build and Publish Container Image
         run: |
           podman login --username mbesar --password ${{ secrets.MANAGE_PACKAGES }} ghcr.io
-          podman manifest create ghcr.io/mmBesar/radicale:latest
-          podman build --platform linux/amd64,linux/arm64 --manifest ghcr.io/mmBesar/radicale:latest .
-          podman manifest push ghcr.io/mmBesar/radicale:latest
+          podman manifest create ghcr.io/mmbesar/radicale:latest
+          podman build --platform linux/amd64,linux/arm64 --manifest ghcr.io/mmbesar/radicale:latest .
+          podman manifest push ghcr.io/mmbesar/radicale:latest
