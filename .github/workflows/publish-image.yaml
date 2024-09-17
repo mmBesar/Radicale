@@ -12,12 +12,13 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Log in to container registry
-        run: echo "${{ secrets.MANAGE_PACKAGES }}" | podman login -u mbesar --password-stdin ghcr.io
+        run: 
+          echo "${{ secrets.MANAGE_PACKAGES }}" | podman login -u mbesar --password-stdin ghcr.io
         
       - name: Build multi-architecture Image
-        run:
+        run: |
           podman build --format docker --platform linux/amd64,linux/arm64 -t ghcr.io/mmbesar/radicale:latest .
 
       - name: Publish multi-architecture Image
-        run:
+        run: |
           podman push ghcr.io/mmbesar/radicale:latest
