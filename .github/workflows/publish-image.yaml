@@ -5,8 +5,7 @@ on:
 
 jobs:
   build_and_publish:
-    machine:
-      image: ubuntu-latest
+    runs-on: fedora-latest
     steps:
       - uses: actions/checkout@v3
       - name: Build and Publish Container Image
