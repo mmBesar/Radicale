@@ -904,6 +904,22 @@ class TestSharingApiSanity(BaseTest):
             logging.info("\n*** GET item using token")
             self.get(token + "event1.ics", check=200)
 
+            # check REPORT
+            logging.info("\n*** REPORT collection via token -> ok")
+            _, responses = self.report(token, """\
+<?xml version="1.0" encoding="utf-8" ?>
+<C:calendar-query xmlns:C="urn:ietf:params:xml:ns:caldav">
+    <D:prop xmlns:D="DAV:">
+        <D:getetag />
+    </D:prop>
+</C:calendar-query>""")
+            assert len(responses) == 1
+            logging.info("response: %r", responses)
+            response = responses[token + "event1.ics"]
+            assert isinstance(response, dict)
+            status, prop = response["D:getetag"]
+            assert status == 200 and prop.text
+
             logging.info("\n*** PUT item using token -> 403 (read-only)")
             event2 = get_file_content("event2.ics")
             self.put(token + "event2.ics", event2, check=403)
