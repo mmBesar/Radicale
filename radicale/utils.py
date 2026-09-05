@@ -462,7 +462,10 @@ def limit_str(content: str, limit: int) -> str:
 
 def textwrap_str(content: str, limit: int = DEFAULT_LIMIT_CONTENT) -> str:
     # TODO: add support for config option and prefix
-    return textwrap.indent(limit_str(content, limit), " ", lambda line: True)
+    if type(content) is str:
+        return textwrap.indent(limit_str(content, limit), " ", lambda line: True)
+    else:
+        return f"content is not of type 'str' but '{type(content)}'"
 
 
 def dataToHex(data, count):
