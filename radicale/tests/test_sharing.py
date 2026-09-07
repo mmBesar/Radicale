@@ -3121,6 +3121,7 @@ permissions: RrWw""")
             self.configure({"sharing": {"permit_create_token": "True"}})
             _, headers, answer = self._sharing_api_json("token", "create", check=200, login="owner1:owner1pw", json_dict=json_dict)
 
+    @pytest.mark.skipif(not pathutils.path_is_collision_free_case_sensitive(tempfile.mkdtemp()), reason="TEMP is not case sensitive")
     def test_sharing_api_permissions_rights(self) -> None:
         """sharing API usage tests related to rights permissions."""
         rights_file_path = os.path.join(self.colpath, "rights")
