@@ -904,6 +904,22 @@ class TestSharingApiSanity(BaseTest):
             logging.info("\n*** GET item using token")
             self.get(token + "event1.ics", check=200)
 
+            # check REPORT
+            logging.info("\n*** REPORT collection via token -> ok")
+            _, responses = self.report(token, """\
+<?xml version="1.0" encoding="utf-8" ?>
+<C:calendar-query xmlns:C="urn:ietf:params:xml:ns:caldav">
+    <D:prop xmlns:D="DAV:">
+        <D:getetag />
+    </D:prop>
+</C:calendar-query>""")
+            assert len(responses) == 1
+            logging.info("response: %r", responses)
+            response = responses[token + "event1.ics"]
+            assert isinstance(response, dict)
+            status, prop = response["D:getetag"]
+            assert status == 200 and prop.text
+
             logging.info("\n*** PUT item using token -> 403 (read-only)")
             event2 = get_file_content("event2.ics")
             self.put(token + "event2.ics", event2, check=403)
@@ -3105,6 +3121,7 @@ permissions: RrWw""")
             self.configure({"sharing": {"permit_create_token": "True"}})
             _, headers, answer = self._sharing_api_json("token", "create", check=200, login="owner1:owner1pw", json_dict=json_dict)
 
+    @pytest.mark.skipif(not pathutils.path_is_collision_free_case_sensitive(tempfile.mkdtemp()), reason="TEMP is not case sensitive")
     def test_sharing_api_permissions_rights(self) -> None:
         """sharing API usage tests related to rights permissions."""
         rights_file_path = os.path.join(self.colpath, "rights")
@@ -3116,27 +3133,27 @@ collection: {user}
 permissions: RrWw
 [owner1-T]
 user: owner1
-collection: {user}/cal-T-uc(/.*)?
+collection: {user}/cal-T(/.*)?
 permissions: RrWwT
 [owner1-t]
 user: owner1
-collection: {user}/cal-t-lc(/.*)?
+collection: {user}/cal-t(/.*)?
 permissions: RrWwt
 [owner1-M]
 user: owner1
-collection: {user}/cal-M-uc(/.*)?
+collection: {user}/cal-M(/.*)?
 permissions: RrWwM
 [owner1-m]
 user: owner1
-collection: {user}/cal-m-lc(/.*)?
+collection: {user}/cal-m(/.*)?
 permissions: RrWwm
 [owner1-P]
 user: owner1
-collection: {user}/cal-P-uc(/.*)?
+collection: {user}/cal-P(/.*)?
 permissions: RrWwP
 [owner1-p]
 user: owner1
-collection: {user}/cal-p-lc(/.*)?
+collection: {user}/cal-p(/.*)?
 permissions: RrWwp
 [default]
 user: .+
@@ -3162,12 +3179,12 @@ permissions: RrWw""")
         json_dict: dict
 
         path_user1 = "/user1/calendarPGu1.ics/"
-        path_owner1_T = "/owner1/cal-T-uc/"
-        path_owner1_t = "/owner1/cal-t-lc/"
-        path_owner1_M = "/owner1/cal-M-uc/"
-        path_owner1_m = "/owner1/cal-m-lc/"
-        path_owner1_P = "/owner1/cal-P-uc/"
-        path_owner1_p = "/owner1/cal-p-lc/"
+        path_owner1_T = "/owner1/cal-T/"
+        path_owner1_t = "/owner1/cal-t/"
+        path_owner1_M = "/owner1/cal-M/"
+        path_owner1_m = "/owner1/cal-m/"
+        path_owner1_P = "/owner1/cal-P/"
+        path_owner1_p = "/owner1/cal-p/"
 
         logging.info("\n*** prepare")
         self.mkcalendar(path_owner1_T, login="owner1:owner1pw")
@@ -3189,52 +3206,32 @@ permissions: RrWw""")
             logging.info("\n*** create map user1/owner1, globally disabled")
             self.configure({"sharing": {"permit_create_map": "False"}})
 
-            logging.info("\n*** create map user1/owner1, globally disabled / not granted M -> 403")
+            logging.info("\n*** create map user1/owner1, globally disabled / granted M -> 200")
             json_dict['PathMapped'] = path_owner1_M
-            json_dict['PathOrToken'] = path_user1.replace(".ics", "dM-uc" + db_type + ".ics")
-            _, headers, answer = self._sharing_api_json("map", "create", check=403, login="owner1:owner1pw", json_dict=json_dict)
-
-            logging.info("\n*** create map user1/owner1, globally disabled / not granted T -> 403")
-            json_dict['PathMapped'] = path_owner1_T
-            json_dict['PathOrToken'] = path_user1.replace(".ics", "dT-uc" + db_type + ".ics")
-            _, headers, answer = self._sharing_api_json("map", "create", check=403, login="owner1:owner1pw", json_dict=json_dict)
-
-            logging.info("\n*** create map user1/owner1, globally disabled / not granted t -> 403")
-            json_dict['PathMapped'] = path_owner1_t
-            json_dict['PathOrToken'] = path_user1.replace(".ics", "dt-lc" + db_type + ".ics")
-            _, headers, answer = self._sharing_api_json("map", "create", check=403, login="owner1:owner1pw", json_dict=json_dict)
-
-            logging.info("\n*** create map user1/owner1, globally disabled / granted m -> 200")
-            json_dict['PathMapped'] = path_owner1_m
-            json_dict['PathOrToken'] = path_user1.replace(".ics", "dm-lc" + db_type + ".ics")
+            json_dict['PathOrToken'] = path_user1.replace(".ics", "M" + db_type + ".ics")
             _, headers, answer = self._sharing_api_json("map", "create", check=200, login="owner1:owner1pw", json_dict=json_dict)
 
-            logging.info("\n*** delete map user1/owner1, globally disabled / granted m -> 200")
-            json_dict['PathMapped'] = path_owner1_m
-            json_dict['PathOrToken'] = path_user1.replace(".ics", "dm-lc" + db_type + ".ics")
+            logging.info("\n*** delete map user1/owner1, globally disabled / granted M -> 200")
+            json_dict['PathMapped'] = path_owner1_M
+            json_dict['PathOrToken'] = path_user1.replace(".ics", "M" + db_type + ".ics")
             _, headers, answer = self._sharing_api_json("map", "delete", check=200, login="owner1:owner1pw", json_dict=json_dict)
+
+            logging.info("\n*** create map user1/owner1, globally disabled / ignore m -> 403")
+            json_dict['PathMapped'] = path_owner1_m
+            json_dict['PathOrToken'] = path_user1.replace(".ics", "m" + db_type + ".ics")
+            _, headers, answer = self._sharing_api_json("map", "create", check=403, login="owner1:owner1pw", json_dict=json_dict)
 
             logging.info("\n*** create map user1/owner1, globally enabled")
             self.configure({"sharing": {"permit_create_map": "True"}})
 
-            logging.info("\n*** create map user1/owner1, globally enabled / not granted M -> 403")
-            json_dict['PathMapped'] = path_owner1_M
+            logging.info("\n*** create map user1/owner1, globally enabled / not granted m -> 403")
+            json_dict['PathMapped'] = path_owner1_m
             json_dict['PathOrToken'] = path_user1.replace(".ics", "eM-uc" + db_type + ".ics")
             _, headers, answer = self._sharing_api_json("map", "create", check=403, login="owner1:owner1pw", json_dict=json_dict)
 
-            logging.info("\n*** create map user1/owner1, globally enabled / ignore T -> 200")
-            json_dict['PathMapped'] = path_owner1_T
-            json_dict['PathOrToken'] = path_user1.replace(".ics", "eT-uc" + db_type + ".ics")
-            _, headers, answer = self._sharing_api_json("map", "create", check=200, login="owner1:owner1pw", json_dict=json_dict)
-
-            logging.info("\n*** create map user1/owner1, globally enabled / ignore t -> 200")
-            json_dict['PathMapped'] = path_owner1_t
-            json_dict['PathOrToken'] = path_user1.replace(".ics", "et-lc" + db_type + ".ics")
-            _, headers, answer = self._sharing_api_json("map", "create", check=200, login="owner1:owner1pw", json_dict=json_dict)
-
-            logging.info("\n*** create map user1/owner1, globally enabled / ignore m -> 200")
-            json_dict['PathMapped'] = path_owner1_m
-            json_dict['PathOrToken'] = path_user1.replace(".ics", "em-lc" + db_type + ".ics")
+            logging.info("\n*** create map user1/owner1, globally enabled / ignore M -> 200")
+            json_dict['PathMapped'] = path_owner1_M
+            json_dict['PathOrToken'] = path_user1.replace(".ics", "M" + db_type + ".ics")
             _, headers, answer = self._sharing_api_json("map", "create", check=200, login="owner1:owner1pw", json_dict=json_dict)
 
             # create token
@@ -3243,40 +3240,24 @@ permissions: RrWw""")
             logging.info("\n*** create token owner1, globally disabled")
             self.configure({"sharing": {"permit_create_token": "False"}})
 
-            logging.info("\n*** create token owner1, globally disabled / not granted M -> 403")
-            json_dict['PathMapped'] = path_owner1_M
-            _, headers, answer = self._sharing_api_json("token", "create", check=403, login="owner1:owner1pw", json_dict=json_dict)
-
-            logging.info("\n*** create token owner1, globally disabled / not granted m -> 403")
-            json_dict['PathMapped'] = path_owner1_m
-            _, headers, answer = self._sharing_api_json("token", "create", check=403, login="owner1:owner1pw", json_dict=json_dict)
-
-            logging.info("\n*** create token owner1, globally disabled / not granted T -> 403")
+            logging.info("\n*** create token owner1, globally disabled / granted T -> 200")
             json_dict['PathMapped'] = path_owner1_T
-            _, headers, answer = self._sharing_api_json("token", "create", check=403, login="owner1:owner1pw", json_dict=json_dict)
-
-            logging.info("\n*** create token owner1, globally disabled / granted t -> 200")
-            json_dict['PathMapped'] = path_owner1_t
             _, headers, answer = self._sharing_api_json("token", "create", check=200, login="owner1:owner1pw", json_dict=json_dict)
+
+            logging.info("\n*** create token owner1, globally disabled / ignore t -> 403")
+            json_dict['PathMapped'] = path_owner1_t
+            _, headers, answer = self._sharing_api_json("token", "create", check=403, login="owner1:owner1pw", json_dict=json_dict)
 
             logging.info("\n*** create token owner1, globally enabled")
             self.configure({"sharing": {"permit_create_token": "True"}})
 
-            logging.info("\n*** create token owner1, globally enabled / ignore M -> 200")
-            json_dict['PathMapped'] = path_owner1_M
-            _, headers, answer = self._sharing_api_json("token", "create", check=200, login="owner1:owner1pw", json_dict=json_dict)
-
-            logging.info("\n*** create token owner1, globally enabled / ignore m -> 200")
-            json_dict['PathMapped'] = path_owner1_m
-            _, headers, answer = self._sharing_api_json("token", "create", check=200, login="owner1:owner1pw", json_dict=json_dict)
-
-            logging.info("\n*** create token owner1, globally enabled / not granted T -> 403")
+            logging.info("\n*** create token owner1, globally enabled / ignore T -> 200")
             json_dict['PathMapped'] = path_owner1_T
-            _, headers, answer = self._sharing_api_json("token", "create", check=403, login="owner1:owner1pw", json_dict=json_dict)
-
-            logging.info("\n*** create token owner1, globally enabled / ignore t -> 200")
-            json_dict['PathMapped'] = path_owner1_t
             _, headers, answer = self._sharing_api_json("token", "create", check=200, login="owner1:owner1pw", json_dict=json_dict)
+
+            logging.info("\n*** create token owner1, globally enabled / not granted t -> 403")
+            json_dict['PathMapped'] = path_owner1_t
+            _, headers, answer = self._sharing_api_json("token", "create", check=403, login="owner1:owner1pw", json_dict=json_dict)
 
             logging.info("\n*** check PROPFIND privileges list on collections directly: RADICALE:share-token T (permit=True)")
             privileges_T = self._propfind_privileges(path_owner1_T, login="owner1:owner1pw")
@@ -3341,7 +3322,7 @@ permissions: RrWw""")
             logging.info("\n*** check PROPFIND privileges list on collections directly by user")
 
             logging.info("\n*** create map user1/owner1 P -> 200")
-            path_share = path_user1.replace(".ics", "P-uc" + db_type + ".ics")
+            path_share = path_user1.replace(".ics", "P" + db_type + ".ics")
             json_dict = {}
             json_dict['PathMapped'] = path_owner1_P
             json_dict['Hidden'] = False
@@ -3404,7 +3385,7 @@ permissions: RrWw""")
             _, headers, answer = self._sharing_api_json("map", "delete", check=200, login="owner1:owner1pw", json_dict=json_dict)
 
             logging.info("\n*** create map user1/owner1 p -> 200")
-            path_share = path_user1.replace(".ics", "p-lc" + db_type + ".ics")
+            path_share = path_user1.replace(".ics", "p" + db_type + ".ics")
             json_dict = {}
             json_dict['PathMapped'] = path_owner1_p
             json_dict['Hidden'] = False

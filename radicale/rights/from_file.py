@@ -37,6 +37,7 @@ Leading or ending slashes are trimmed from collection's path.
 
 import configparser
 import re
+from typing import Union
 
 from radicale import config, pathutils, rights
 from radicale.log import logger
@@ -68,11 +69,27 @@ class Rights(rights.BaseRights):
                 collection_pattern = rights_config_parser.get(section, "collection")
                 allowed_groups = rights_config_parser.get(section, "groups", fallback="").split(",")
                 permission = rights_config_parser.get(section, "permissions")
+                error: Union[str, None] = None
                 # test for conflicting permissions
+                if "d" in permission and "D" in permission:
+                    error = "conflicting 'd' + 'D'"
+                if "o" in permission and "O" in permission:
+                    error = "conflicting 'o' + 'O'"
                 if "p" in permission and "P" in permission:
-                    raise RuntimeError("conflicting p+P found")
+                    error = "conflicting 'p' + 'P'"
                 if "e" in permission and "E" in permission:
-                    raise RuntimeError("conflicting e+E found")
+                    error = "conflicting 'e' + 'E'"
+                if "m" in permission and "M" in permission:
+                    error = "conflicting 'm' + 'M'"
+                if "t" in permission and "T" in permission:
+                    error = "conflicting 't' + 'T'"
+                # test for server-side flag permissions
+                if "u" in permission:
+                    error = "unsupported 'u'"
+                if "U" in permission:
+                    error = "unsupported 'U'"
+                if error is not None:
+                    raise RuntimeError("%s permission found in section %r: %r" % (error, section, permission))
                 self._rights_config[section] = {"user_pattern": user_pattern, "collection_pattern": collection_pattern,
                                                 "allowed_groups": allowed_groups, "permission": permission}
             except Exception as e:
