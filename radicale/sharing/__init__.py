@@ -1135,12 +1135,12 @@ class BaseSharing:
 
             if ShareType == "token":
                 if self.permit_create_token is False:
-                    if "t" not in access.permissions:
-                        logger.warning(api_info + ": access to PathMapped=%r not allowed for owner %r (permit=False but explict grant misses 't')", PathMapped, user)
+                    if "T" not in access.permissions:
+                        logger.warning(api_info + ": access to PathMapped=%r not allowed for owner %r (permit=False and missing permission 'T')", PathMapped, user)
                         return httputils.NOT_ALLOWED
                 else:
-                    if "T" in access.permissions:
-                        logger.warning(api_info + ": access to PathMapped=%r not allowed for owner %r (permit=True but denied by 'T')", PathMapped, user)
+                    if "t" in access.permissions:
+                        logger.warning(api_info + ": access to PathMapped=%r not allowed for owner %r (permit=True but explicit denied by permission 't')", PathMapped, user)
                         return httputils.NOT_ALLOWED
 
                 if User is not None:
@@ -1198,12 +1198,12 @@ class BaseSharing:
                     return httputils.CONFLICT
 
                 if self.permit_create_map is False:
-                    if "m" not in access.permissions:
-                        logger.warning(api_info + ": access to PathMapped=%r not allowed for owner %r (permit=False but explicit grant misses 'm')", PathMapped, user)
+                    if "M" not in access.permissions:
+                        logger.warning(api_info + ": access to PathMapped=%r not allowed for owner %r (permit=False and missing permission 'M')", PathMapped, user)
                         return httputils.NOT_ALLOWED
                 else:
-                    if "M" in access.permissions:
-                        logger.warning(api_info + ": access to PathMapped=%r not allowed for owner %r (permit=True but denied by 'M')", PathMapped, user)
+                    if "m" in access.permissions:
+                        logger.warning(api_info + ": access to PathMapped=%r not allowed for owner %r (permit=True but explicit denied by permission 'm')", PathMapped, user)
                         return httputils.NOT_ALLOWED
 
                 if User.startswith(SHARING_SEPARATOR_GROUP) or User.startswith(SHARING_SEPARATOR_REALM):
