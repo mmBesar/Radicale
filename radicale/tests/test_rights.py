@@ -18,6 +18,7 @@
 Radicale tests with simple requests and rights.
 """
 
+import logging
 import os
 
 from radicale.tests import BaseTest
@@ -183,3 +184,135 @@ permissions: i""")
         self.put("/user/calendar/", "BEGIN:VCALENDAR\r\nEND:VCALENDAR")
         event1 = get_file_content("event1.ics")
         self.put("/user/calendar/event1.ics", event1)
+
+    def test_conflicting_rights(self) -> None:
+        """tests conflicting rights permissions."""
+        rights_file_path = os.path.join(self.colpath, "rights")
+
+        logging.info("\n*** check conflicting rights: Dd")
+        with open(rights_file_path, "w") as f:
+            f.write("""\
+[owner1-Dd]
+user: owner1
+collection: {user}/cal-Dd(/.*)?
+permissions: RrWwDd""")
+
+        try:
+            self.configure({"rights": {"file": rights_file_path, "type": "from_file"}})
+        except RuntimeError as e:
+            logging.debug("Exception: %s", str(e))
+            assert "Dd" in str(e)
+        except Exception:
+            raise
+
+        logging.info("\n*** check conflicting rights: Oo")
+        with open(rights_file_path, "w") as f:
+            f.write("""\
+[owner1-Oo]
+user: owner1
+collection: {user}/cal-Oo(/.*)?
+permissions: RrWwOo""")
+
+        try:
+            self.configure({"rights": {"file": rights_file_path, "type": "from_file"}})
+        except RuntimeError as e:
+            logging.debug("Exception: %s", str(e))
+            assert "Oo" in str(e)
+        except Exception:
+            raise
+
+        logging.info("\n*** check conflicting rights: Tt")
+        with open(rights_file_path, "w") as f:
+            f.write("""\
+[owner1-Tt]
+user: owner1
+collection: {user}/cal-Tt(/.*)?
+permissions: RrWwTt""")
+
+        try:
+            self.configure({"rights": {"file": rights_file_path, "type": "from_file"}})
+        except RuntimeError as e:
+            logging.debug("Exception: %s", str(e))
+            assert "Tt" in str(e)
+        except Exception:
+            raise
+
+        logging.info("\n*** check conflicting rights: Mm")
+        with open(rights_file_path, "w") as f:
+            f.write("""\
+[owner1-Mm]
+user: owner1
+collection: {user}/cal-Mm(/.*)?
+permissions: RrWwMm""")
+
+        try:
+            self.configure({"rights": {"file": rights_file_path, "type": "from_file"}})
+        except RuntimeError as e:
+            logging.debug("Exception: %s", str(e))
+            assert "Mm" in str(e)
+        except Exception:
+            raise
+
+        logging.info("\n*** check conflicting rights: pP")
+        with open(rights_file_path, "w") as f:
+            f.write("""\
+[owner1-Pp]
+user: owner1
+collection: {user}/cal-Pp(/.*)?
+permissions: RrWwPp""")
+
+        try:
+            self.configure({"rights": {"file": rights_file_path, "type": "from_file"}})
+        except RuntimeError as e:
+            logging.debug("Exception: %s", str(e))
+            assert "Pp" in str(e)
+        except Exception:
+            raise
+
+        logging.info("\n*** check conflicting rights: Ee")
+        with open(rights_file_path, "w") as f:
+            f.write("""\
+[owner1-Ee]
+user: owner1
+collection: {user}/cal-Ee(/.*)?
+permissions: RrWwEe""")
+
+        try:
+            self.configure({"rights": {"file": rights_file_path, "type": "from_file"}})
+        except RuntimeError as e:
+            logging.debug("Exception: %s", str(e))
+            assert "Ee" in str(e)
+        except Exception:
+            raise
+
+        logging.info("\n*** check server-side-only rights flag: U")
+        with open(rights_file_path, "w") as f:
+            f.write("""\
+[owner1-U]
+user: owner1
+collection: {user}/cal-U(/.*)?
+permissions: RrWwU""")
+
+        try:
+            self.configure({"rights": {"file": rights_file_path, "type": "from_file"}})
+        except RuntimeError as e:
+            logging.debug("Exception: %s", str(e))
+            assert "U" in str(e)
+        except Exception:
+            raise
+
+        logging.info("\n*** check server-side-only rights flag: u")
+        with open(rights_file_path, "w") as f:
+            f.write("""\
+[owner1-u]
+user: owner1
+collection: {user}/cal-u(/.*)?
+permissions: RrWwu""")
+
+        try:
+            self.configure({"rights": {"file": rights_file_path, "type": "from_file"}})
+        except RuntimeError as e:
+            logging.debug("Exception: %s", str(e))
+            assert "u" in str(e)
+        except Exception:
+            raise
